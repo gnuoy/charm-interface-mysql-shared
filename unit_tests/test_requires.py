@@ -60,7 +60,7 @@ class TestMySQLSharedRequires(unittest.TestCase):
         self._patches = None
         self._patches_start = None
 
-    def patch_kr(self, attr, return_value=None):
+    def patch_msr(self, attr, return_value=None):
         mocked = mock.patch.object(self.msr, attr)
         self._patches[attr] = mocked
         started = mocked.start()
@@ -82,26 +82,26 @@ class TestMySQLSharedRequires(unittest.TestCase):
             self.assertEqual(hook_patterns[k], v['args'])
 
     def test_joined(self):
-        self.patch_kr('set_state')
+        self.patch_msr('set_state')
         self.msr.joined()
         self.set_state.assert_called_once_with('{relation_name}.connected')
 
     def test_changed(self):
-        self.patch_kr('base_data_complete', True)
-        self.patch_kr('access_network_data_complete', False)
-        self.patch_kr('ssl_data_complete', False)
-        self.patch_kr('set_state')
+        self.patch_msr('base_data_complete', True)
+        self.patch_msr('access_network_data_complete', False)
+        self.patch_msr('ssl_data_complete', False)
+        self.patch_msr('set_state')
         self.msr.changed()
         self.set_state.assert_has_calls([
             mock.call('{relation_name}.available'),
         ])
-        self.patch_kr('access_network_data_complete', True)
+        self.patch_msr('access_network_data_complete', True)
         self.msr.changed()
         self.set_state.assert_has_calls([
             mock.call('{relation_name}.available'),
             mock.call('{relation_name}.available.access_network'),
         ])
-        self.patch_kr('ssl_data_complete', True)
+        self.patch_msr('ssl_data_complete', True)
         self.msr.changed()
         self.set_state.assert_has_calls([
             mock.call('{relation_name}.available'),
@@ -110,7 +110,7 @@ class TestMySQLSharedRequires(unittest.TestCase):
         ])
 
     def test_departed(self):
-        self.patch_kr('remove_state')
+        self.patch_msr('remove_state')
         self.msr.departed()
         self.remove_state.assert_has_calls([
             mock.call('{relation_name}.available'),
@@ -118,8 +118,8 @@ class TestMySQLSharedRequires(unittest.TestCase):
         ])
 
     def test_configure_no_prefix(self):
-        self.patch_kr('set_local')
-        self.patch_kr('set_remote')
+        self.patch_msr('set_local')
+        self.patch_msr('set_remote')
         expect = {
             'database': 'db',
             'username': 'bob',
@@ -130,9 +130,9 @@ class TestMySQLSharedRequires(unittest.TestCase):
         self.set_remote.assert_called_once_with(**expect)
 
     def test_configure_prefix(self):
-        self.patch_kr('set_local')
-        self.patch_kr('set_prefix')
-        self.patch_kr('set_remote')
+        self.patch_msr('set_local')
+        self.patch_msr('set_prefix')
+        self.patch_msr('set_remote')
         expect = {
             'nova_database': 'db',
             'nova_username': 'bob',
@@ -144,75 +144,75 @@ class TestMySQLSharedRequires(unittest.TestCase):
         self.set_remote.assert_called_once_with(**expect)
 
     def test_set_prefix(self):
-        self.patch_kr('get_local', ['nova'])
-        self.patch_kr('set_local')
+        self.patch_msr('get_local', ['nova'])
+        self.patch_msr('set_local')
         self.msr.set_prefix('neutron')
         self.set_local.assert_called_once_with('prefixes', ['nova', 'neutron'])
 
     def test_set_prefix_all_new(self):
-        self.patch_kr('get_local', [])
-        self.patch_kr('set_local')
+        self.patch_msr('get_local', [])
+        self.patch_msr('set_local')
         self.msr.set_prefix('neutron')
         self.set_local.assert_called_once_with('prefixes', ['neutron'])
 
     def test_get_prefixes(self):
-        self.patch_kr('get_local')
+        self.patch_msr('get_local')
         self.msr.get_prefixes()
         self.get_local.assert_called_once_with('prefixes')
 
     def test_database_no_prefix(self):
-        self.patch_kr('get_local')
+        self.patch_msr('get_local')
         self.msr.database()
         self.get_local.assert_called_once_with('database')
 
     def test_database_prefix(self):
-        self.patch_kr('get_local')
+        self.patch_msr('get_local')
         self.msr.database('nova')
         self.get_local.assert_called_once_with('nova_database')
 
     def test_username_no_prefix(self):
-        self.patch_kr('get_local')
+        self.patch_msr('get_local')
         self.msr.username()
         self.get_local.assert_called_once_with('username')
 
     def test_username_prefix(self):
-        self.patch_kr('get_local')
+        self.patch_msr('get_local')
         self.msr.username('nova')
         self.get_local.assert_called_once_with('nova_username')
 
     def test_hostname_no_prefix(self):
-        self.patch_kr('get_local')
+        self.patch_msr('get_local')
         self.msr.hostname()
         self.get_local.assert_called_once_with('hostname')
 
     def test_hostname_prefix(self):
-        self.patch_kr('get_local')
+        self.patch_msr('get_local')
         self.msr.hostname('nova')
         self.get_local.assert_called_once_with('nova_hostname')
 
     def test_password_no_prefix(self):
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.msr.password()
         self.get_remote.assert_called_once_with('password')
 
     def test_password_prefix(self):
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.msr.password('nova')
         self.get_remote.assert_called_once_with('nova_password')
 
     def test_allowed_units_no_prefix(self):
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.msr.allowed_units()
         self.get_remote.assert_called_once_with('allowed_units')
 
     def test_allowed_units_prefix(self):
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.msr.allowed_units('nova')
         self.get_remote.assert_called_once_with('nova_allowed_units')
 
     def test_base_data_complete_prefix_complete(self):
-        self.patch_kr('db_host', 'myhost')
-        self.patch_kr('get_prefixes', ['nova'])
+        self.patch_msr('db_host', 'myhost')
+        self.patch_msr('get_prefixes', ['nova'])
 
         def _get_remote(key):
             data = {
@@ -220,13 +220,13 @@ class TestMySQLSharedRequires(unittest.TestCase):
                 'nova_allowed_units': 'nova_allowed',
             }
             return data[key]
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.get_remote.side_effect = _get_remote
         self.assertTrue(self.msr.base_data_complete())
 
     def test_base_data_complete_prefix_incomplete(self):
-        self.patch_kr('db_host', 'myhost')
-        self.patch_kr('get_prefixes', ['nova', 'neutron'])
+        self.patch_msr('db_host', 'myhost')
+        self.patch_msr('get_prefixes', ['nova', 'neutron'])
 
         def _get_remote(key):
             data = {
@@ -236,13 +236,13 @@ class TestMySQLSharedRequires(unittest.TestCase):
                 'neutron_allowed_units': 'neutron_allowed',
             }
             return data[key]
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.get_remote.side_effect = _get_remote
         self.assertFalse(self.msr.base_data_complete())
 
     def test_base_data_complete_no_prefix_complete(self):
-        self.patch_kr('db_host', 'myhost')
-        self.patch_kr('get_prefixes', [])
+        self.patch_msr('db_host', 'myhost')
+        self.patch_msr('get_prefixes', [])
 
         def _get_remote(key):
             data = {
@@ -250,13 +250,13 @@ class TestMySQLSharedRequires(unittest.TestCase):
                 'allowed_units': 'neutron_allowed',
             }
             return data[key]
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.get_remote.side_effect = _get_remote
         self.assertTrue(self.msr.base_data_complete())
 
     def test_base_data_complete_no_prefix_incomplete(self):
-        self.patch_kr('db_host', 'myhost')
-        self.patch_kr('get_prefixes', [])
+        self.patch_msr('db_host', 'myhost')
+        self.patch_msr('get_prefixes', [])
 
         def _get_remote(key):
             data = {
@@ -264,19 +264,19 @@ class TestMySQLSharedRequires(unittest.TestCase):
                 'allowed_units': 'neutron_allowed',
             }
             return data[key]
-        self.patch_kr('get_remote')
+        self.patch_msr('get_remote')
         self.get_remote.side_effect = _get_remote
         self.assertFalse(self.msr.base_data_complete())
 
     def test_access_network_data_complete(self):
-        self.patch_kr('access_network', '10.0.0.10/24')
+        self.patch_msr('access_network', '10.0.0.10/24')
         self.assertTrue(self.msr.access_network_data_complete())
-        self.patch_kr('access_network', None)
+        self.patch_msr('access_network', None)
         self.assertFalse(self.msr.access_network_data_complete())
 
     def test_ssl_data_complete(self):
-        self.patch_kr('ssl_cert', 'mycert')
-        self.patch_kr('ssl_key', 'mykey')
+        self.patch_msr('ssl_cert', 'mycert')
+        self.patch_msr('ssl_key', 'mykey')
         self.assertTrue(self.msr.ssl_data_complete())
-        self.patch_kr('ssl_key', None)
+        self.patch_msr('ssl_key', None)
         self.assertFalse(self.msr.ssl_data_complete())
